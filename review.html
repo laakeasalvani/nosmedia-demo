@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rate your video | nosMedia</title>
+<meta name="description" content="Tell nosMedia how your project went.">
+<meta name="robots" content="noindex">
+<script>document.documentElement.className = "js";</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400..700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="img/logo.svg">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main id="main" class="review-page">
+  <div class="review-card" id="funnel">
+    <span class="logo-mark" role="img" aria-label="nosMedia"></span>
+
+    <div class="review-step" id="step-rate">
+      <h1>How did your video turn out?</h1>
+      <p class="muted">Tap a star. It takes ten seconds and it means a lot.</p>
+      <div class="stars" role="group" aria-label="Rate nosMedia">
+        <button class="star" aria-label="1 star">★</button>
+        <button class="star" aria-label="2 stars">★</button>
+        <button class="star" aria-label="3 stars">★</button>
+        <button class="star" aria-label="4 stars">★</button>
+        <button class="star" aria-label="5 stars">★</button>
+      </div>
+      <p class="star-hint" aria-live="polite"></p>
+    </div>
+
+    <div class="review-step" id="step-happy" hidden>
+      <h1>Mahalo! That made my day.</h1>
+      <p class="muted">Would you share that on Google? It’s the best way to help other local businesses find me.</p>
+      <a class="btn" data-google href="#" rel="noopener">Post my review on Google</a>
+      <p class="form-note" style="margin-top:14px">Opens the review box on Google. Pick your stars and add a line about your project.</p>
+    </div>
+
+    <div class="review-step" id="step-private" hidden>
+      <h1>Thanks for being honest.</h1>
+      <p class="muted">Tell me what fell short and I’ll reach out to make it right.</p>
+      <form class="form" id="private-feedback">
+        <div class="field"><label for="r-name">Your name</label><input id="r-name" name="name" autocomplete="name"></div>
+        <div class="field"><label for="r-fb">What happened?</label><textarea id="r-fb" name="feedback"></textarea></div>
+        <button class="btn" type="submit">Send to Carson</button>
+      </form>
+      <a class="small-link" data-google href="#" rel="noopener">Or leave a public review on Google</a>
+    </div>
+
+    <div class="review-step" id="step-thanks" hidden>
+      <h1>Got it. Mahalo.</h1>
+      <p class="muted">Your email app opened with your note ready to send. Carson will reach out soon.</p>
+    </div>
+  </div>
+</main>
+<script src="js/config.js"></script>
+<script src="js/site.js"></script>
+</body>
+</html>
