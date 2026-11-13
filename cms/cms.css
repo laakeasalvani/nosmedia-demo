@@ -22,19 +22,22 @@ html.cms-pending [data-cms-list] { visibility: hidden; }
 }
 .cms-backdrop.open { display: flex; }
 .cms-modal {
-  width: min(420px, 100%); max-height: calc(100vh - 32px); overflow: auto;
+  width: min(420px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow: auto;
   background: #fff; color: #000; border-radius: 18px; padding: 28px;
   display: grid; gap: 14px; font: 400 16px/1.5 var(--text, system-ui, sans-serif);
 }
 .cms-modal h2 { margin: 0 0 4px; font: 400 2rem/1 var(--display, Impact, sans-serif); text-transform: uppercase; }
 .cms-modal label { display: grid; gap: 6px; font-size: .9rem; font-weight: 600; }
 .cms-modal input, .cms-modal textarea {
-  font: inherit; font-weight: 400; min-height: 44px; padding: 10px 12px;
+  /* 16px, not the label's smaller size: iPhone Safari zooms the page into any box under 16px. */
+  font: inherit; font-size: 16px; font-weight: 400; min-height: 44px; padding: 10px 12px;
   border: 1px solid #c9c9c7; border-radius: 10px; background: #fff; color: #000;
 }
 .cms-modal .cms-hint { margin: -6px 0 0; color: #5c5c5c; font-size: .85rem; font-weight: 400; }
 .cms-error { margin: 0; color: #b00020; font-size: .9rem; min-height: 1.2em; }
 .cms-row { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+/* Save / Cancel stay in view at the bottom of a long box (Settings on a phone). */
+.cms-modal > .cms-row:last-child { position: sticky; bottom: -28px; margin: 0 -28px -28px; padding: 12px 28px 28px; background: #fff; }
 
 .cms-btn {
   min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid #000;
@@ -71,6 +74,9 @@ html.cms-pending [data-cms-list] { visibility: hidden; }
 /* The full-screen menu stacks one link per row; keep each pencil on its link's row. */
 html.cms-editing-on .menu nav { grid-template-columns: auto auto; justify-content: start; align-items: center; column-gap: 12px; }
 html.cms-editing-on .menu nav .cms-pencil { margin-left: 0; }
+/* The header has no room beside its button on a phone; hang the pencil just below it. */
+html.cms-editing-on .header-right { position: relative; }
+.header-right .cms-pencil { position: absolute; top: calc(100% + 8px); right: 0; margin: 0; }
 .cms-editing { outline: 2px solid #3b82f6; outline-offset: 4px; background: rgba(59, 130, 246, .06); }
 /* The hero text fades out on scroll; keep it visible while editing. */
 html.cms-editing-on .hero-inner { opacity: 1 !important; transform: none !important; }
@@ -87,6 +93,8 @@ html.cms-editing-on .hero-inner { opacity: 1 !important; transform: none !import
 .cms-media-host { position: relative; }
 .cms-media-btn { position: absolute; top: 12px; right: 12px; z-index: 20; box-shadow: 0 4px 16px rgba(0, 0, 0, .25); }
 .hero .cms-media-btn { top: calc(var(--header, 76px) + 12px); }
+/* ...and below the header button's pencil, which hangs under the header while editing. */
+html.cms-editing-on .hero .cms-media-btn { top: calc(var(--header, 76px) + 64px); }
 .cms-slot-img { width: 100%; height: 100%; object-fit: cover; }
 .cms-upload { z-index: 1050; }
 .cms-progress { height: 8px; border-radius: 999px; background: #e2e2e0; overflow: hidden; }
@@ -107,3 +115,28 @@ html.cms-editing-on .cms-item-tools {
 .cms-tool:disabled { opacity: .35; cursor: default; }
 .cms-tool[aria-label^="Delete"] { margin-left: auto; }
 .cms-add { display: block; margin: 16px auto 0; }
+
+/* ---------- iPhone ---------- */
+@media (max-width: 600px) {
+  /* The editing bar becomes a full-width strip instead of wrapping into a tall pill. */
+  .cms-badge {
+    left: 12px; right: 12px; max-width: none; transform: translateY(160%);
+    flex-wrap: nowrap; gap: 6px; padding: 6px; border-radius: 18px;
+  }
+  .cms-badge.open { transform: translateY(0); }
+  .cms-badge-label { display: none; }
+  .cms-badge .cms-btn { flex: 1 1 0; min-width: 0; padding: 0 8px; }
+  /* Room under the last section so the strip never covers it. */
+  html.cms-editing-on body { padding-bottom: 84px; }
+
+  /* Card tools fit on one row: ← → Replace video, label, ×. */
+  html.cms-editing-on .cms-item-tools { gap: 4px; }
+  .cms-tool { padding: 0 10px; font-size: .8rem; }
+
+  .cms-modal { padding: 22px 18px; border-radius: 16px; }
+  .cms-modal > .cms-row:last-child { bottom: -22px; margin: 0 -18px -22px; padding: 12px 18px 22px; }
+}
+
+/* Slide titles run down the top-left corner, so the slide tools sit at the
+   bottom instead of covering the words Carson needs to tap. */
+html.cms-editing-on [data-cms-list="slides"] .cms-item-tools { top: auto; bottom: 8px; }

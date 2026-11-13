@@ -4,6 +4,7 @@ import { initTextEditing } from './edit-text.js';
 import { initMediaEditing } from './edit-media.js';
 import { initLists } from './lists.js';
 import { applySettings, initSettingsUi } from './settings-ui.js';
+import { loginMessage } from './login-message.js';
 
 // CMS entry point, loaded on every page after js/site.js.
 // Order matters: content first (so the page shows Carson's words), then the
@@ -69,14 +70,20 @@ function wire(ui) {
         form.password.value = '';
         // Admin status arrives a moment later (onAdminChange below). If it
         // never does, the account exists but isn't in the admins list.
+        // 15s, not 5s: on a phone signal the first database check can be slow,
+        // and giving up early logged out a password that was right.
         setTimeout(function () {
           if (isAdmin() || !ui.modal.classList.contains('open')) return;
-          errorEl.textContent = 'This account can’t edit the site yet. Ask Laakea to add it.';
+          errorEl.textContent = 'This account can’t edit the site yet, or the connection is too slow. Check your signal, or ask Laakea to add the account.';
           logout();
-        }, 5000);
+        }, 15000);
       })
-      .catch(function () {
-        errorEl.textContent = 'That email and password didn’t match. Try again.';
+      .catch(function (err) {
+        // Say what actually went wrong. A weak phone signal used to show as
+        // "didn't match", which sent Carson retyping a password that was right.
+        const code = (err && err.code) || '';
+        console.warn('[cms] login failed:', code || err);
+        errorEl.textContent = loginMessage(code);
       })
       .finally(function () { btn.disabled = false; });
   });
