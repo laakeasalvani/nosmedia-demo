@@ -58,6 +58,19 @@ html.cms-pending [data-cms-list] { visibility: hidden; }
 /* Editable text: a dashed outline Carson can see on both white and black. */
 .cms-editable { outline: 1px dashed rgba(127, 127, 127, .9); outline-offset: 4px; cursor: text; border-radius: 2px; }
 .cms-editable:hover { outline-style: solid; }
+.cms-editable.cms-linked:not(.cms-editing) { cursor: pointer; }
+
+/* Pencil beside each page link: tap the link to go there, tap this to reword it. */
+.cms-pencil {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 44px; height: 44px; margin-left: 8px; padding: 0; vertical-align: middle;
+  border: 1px solid #000; border-radius: 50%; background: #fff; color: #000; cursor: pointer;
+}
+.cms-pencil:hover { background: #000; color: #fff; }
+.cms-pencil svg { width: 18px; height: 18px; display: block; }
+/* The full-screen menu stacks one link per row; keep each pencil on its link's row. */
+html.cms-editing-on .menu nav { grid-template-columns: auto auto; justify-content: start; align-items: center; column-gap: 12px; }
+html.cms-editing-on .menu nav .cms-pencil { margin-left: 0; }
 .cms-editing { outline: 2px solid #3b82f6; outline-offset: 4px; background: rgba(59, 130, 246, .06); }
 /* The hero text fades out on scroll; keep it visible while editing. */
 html.cms-editing-on .hero-inner { opacity: 1 !important; transform: none !important; }

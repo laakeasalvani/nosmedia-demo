@@ -14,6 +14,16 @@ const listeners = [];
 let editing = false;
 const editListeners = [];
 
+// Editing is remembered for this tab only (like the login), so moving to
+// another page through the menu keeps it on instead of needing the gear again.
+const EDITING_KEY = 'nosCmsEditing';
+function rememberEditing(on) {
+  try { if (on) sessionStorage.setItem(EDITING_KEY, '1'); else sessionStorage.removeItem(EDITING_KEY); } catch (e) {}
+}
+function wasEditing() {
+  try { return sessionStorage.getItem(EDITING_KEY) === '1'; } catch (e) { return false; }
+}
+
 function notify() {
   listeners.forEach(function (cb) { cb(adminActive); });
 }
@@ -46,6 +56,7 @@ export function setEditing(on) {
   const next = !!on && adminActive;   // editing without admin is never possible
   if (next === editing) return;
   editing = next;
+  rememberEditing(editing);
   notifyEditing();
 }
 
@@ -62,6 +73,7 @@ export function initAuth() {
     onAuthStateChanged(auth, async function (user) {
       if (!user) {
         adminActive = false;
+        rememberEditing(false);
         if (editing) {
           editing = false;
           notifyEditing();
@@ -81,6 +93,7 @@ export function initAuth() {
         notifyEditing();
       }
       notify();
+      if (adminActive && !editing && wasEditing()) setEditing(true);
     });
   });
 }
