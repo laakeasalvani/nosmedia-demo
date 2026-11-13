@@ -1,1 +1,71 @@
-/* CMS styles: filled in Task 6 */
+/* nosMedia CMS: only what Carson sees while signed in, plus the gear.
+   Black and white like the site. Tap targets are at least 44px because he
+   edits from his iPhone. */
+
+/* Until Firestore answers (max 3s, see the inline guard in each <head>), hide
+   what it might overwrite so visitors never see the old words flash. */
+html.cms-pending [data-cms-id],
+html.cms-pending [data-cms-list] { visibility: hidden; }
+
+.cms-gear {
+  width: 44px; height: 44px; margin: -12px -12px -12px 0; padding: 12px;
+  border: 0; background: none; color: inherit; cursor: pointer; opacity: .55;
+}
+.cms-gear:hover, .cms-gear.is-admin { opacity: 1; }
+.cms-gear svg { width: 20px; height: 20px; display: block; }
+.cms-gear-fixed { position: fixed; right: 16px; bottom: 16px; margin: 0; color: var(--graphite, #5c5c5c); z-index: 60; }
+
+.cms-backdrop {
+  position: fixed; inset: 0; z-index: 1000; display: none;
+  align-items: center; justify-content: center; padding: 16px;
+  background: rgba(0, 0, 0, .55);
+}
+.cms-backdrop.open { display: flex; }
+.cms-modal {
+  width: min(420px, 100%); max-height: calc(100vh - 32px); overflow: auto;
+  background: #fff; color: #000; border-radius: 18px; padding: 28px;
+  display: grid; gap: 14px; font: 400 16px/1.5 var(--text, system-ui, sans-serif);
+}
+.cms-modal h2 { margin: 0 0 4px; font: 400 2rem/1 var(--display, Impact, sans-serif); text-transform: uppercase; }
+.cms-modal label { display: grid; gap: 6px; font-size: .9rem; font-weight: 600; }
+.cms-modal input, .cms-modal textarea {
+  font: inherit; font-weight: 400; min-height: 44px; padding: 10px 12px;
+  border: 1px solid #c9c9c7; border-radius: 10px; background: #fff; color: #000;
+}
+.cms-modal .cms-hint { margin: -6px 0 0; color: #5c5c5c; font-size: .85rem; font-weight: 400; }
+.cms-error { margin: 0; color: #b00020; font-size: .9rem; min-height: 1.2em; }
+.cms-row { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+
+.cms-btn {
+  min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid #000;
+  background: #000; color: #fff; font: 600 .95rem var(--text, system-ui, sans-serif); cursor: pointer;
+}
+.cms-btn:disabled { opacity: .5; cursor: default; }
+.cms-btn-ghost { background: #fff; color: #000; }
+
+.cms-badge {
+  position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translate(-50%, 160%);
+  z-index: 900; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 18px;
+  max-width: calc(100vw - 32px); flex-wrap: wrap; justify-content: center;
+  background: #fff; color: #000; border: 1px solid #000; border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .18); transition: transform .3s;
+  font: 600 .95rem var(--text, system-ui, sans-serif);
+}
+.cms-badge.open { transform: translate(-50%, 0); }
+.cms-badge-label::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: #000; }
+#cmsBadgeExtra { display: contents; }
+
+/* Editable text: a dashed outline Carson can see on both white and black. */
+.cms-editable { outline: 1px dashed rgba(127, 127, 127, .9); outline-offset: 4px; cursor: text; border-radius: 2px; }
+.cms-editable:hover { outline-style: solid; }
+.cms-editing { outline: 2px solid #3b82f6; outline-offset: 4px; background: rgba(59, 130, 246, .06); }
+/* The hero text fades out on scroll; keep it visible while editing. */
+html.cms-editing-on .hero-inner { opacity: 1 !important; transform: none !important; }
+
+.cms-toast {
+  position: fixed; left: 50%; top: 20px; transform: translate(-50%, -150%); z-index: 1100;
+  max-width: calc(100vw - 32px); padding: 12px 18px; border-radius: 12px;
+  background: #000; color: #fff; font: 600 .95rem/1.4 var(--text, system-ui, sans-serif);
+  transition: transform .25s; text-align: center;
+}
+.cms-toast.show { transform: translate(-50%, 0); }
