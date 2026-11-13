@@ -1,0 +1,19 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAdmin() {
+      return request.auth != null &&
+        firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+
+    // Carson's uploads. Public read, because they're on the website. Writes
+    // are admin-only, under 2GB, and only video or image types.
+    match /media/{allPaths=**} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+        && request.resource.size < 2 * 1024 * 1024 * 1024
+        && request.resource.contentType.matches('video/.*|image/.*');
+      allow delete: if isAdmin();
+    }
+  }
+}
