@@ -2,7 +2,7 @@ import { getField, setField } from './content-store.js';
 import { onEditingChange } from './auth.js';
 import { pickVideo, pickImage } from './media-picker.js';
 import { deleteIfOwned } from './upload.js';
-import { showToast } from './toast.js';
+import { saveWithFeedback } from './save.js';
 
 // Single media slots: [data-cms-type="video"] (the home hero) stores
 // {src, poster}; [data-cms-type="image"] (the About portrait) stores a URL.
@@ -63,17 +63,14 @@ export function initMediaEditing() {
       const old = getField(key, null);
       const next = isVideo ? await pickVideo({ slot: slot, id: 'main' }) : await pickImage({ slot: slot, id: 'main' });
       if (!next) return;
-      try {
-        await setField(key, next);
-      } catch (err) {
-        console.warn('[cms] save failed:', err && (err.code || err.message));
-        showToast('Not saved — check your connection', 4000);
+      const status = await saveWithFeedback(setField(key, next));
+      if (status === 'error') {
         if (isVideo) { deleteIfOwned(next.src); deleteIfOwned(next.poster); } else deleteIfOwned(next);
         return;
       }
       if (isVideo) applyVideo(el, next); else applyImage(el, next);
-      showToast('Saved');
-      if (old) {
+      // Only clear out the old file once the save is confirmed.
+      if (status === 'ok' && old) {
         if (isVideo) { deleteIfOwned(old.src); deleteIfOwned(old.poster); } else deleteIfOwned(old);
       }
     });

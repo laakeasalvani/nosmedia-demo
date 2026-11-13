@@ -16,3 +16,18 @@ export function isOwnedStorageUrl(url, bucket) {
   const prefix = 'https://firebasestorage.googleapis.com/v0/b/' + bucket + '/o/media%2F';
   return String(url).indexOf(prefix) === 0;
 }
+
+// The label a file is uploaded under. A video that passed the H.264 check is
+// always labelled video/mp4, even from a .mov: Firefox refuses to play
+// anything served as video/quicktime, and an empty type would be refused by
+// the Storage rules. Only the label changes, never the bytes.
+export function uploadContentType(kind, file) {
+  if (kind === 'video') return 'video/mp4';
+  return (file && file.type) || 'application/octet-stream';
+}
+
+// HEIC (Apple's photo default) shows only in Safari; Chrome and Firefox show
+// a broken image. Same reasoning as H.264-only for video.
+export function isAllowedImageType(type) {
+  return /^image\/(jpeg|png|webp)$/i.test(type || '');
+}

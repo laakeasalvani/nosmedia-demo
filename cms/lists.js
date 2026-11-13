@@ -4,6 +4,9 @@ import { pickVideo } from './media-picker.js';
 import { deleteIfOwned } from './upload.js';
 import { serviceOptions, embedUrl } from './derive.js';
 import { showToast } from './toast.js';
+import { getField, setField } from './content-store.js';
+import { listView } from './collection-order.js';
+import { raceTimeout, once } from './timeout.js';
 
 // The lists Carson can grow, shrink and reorder:
 //   services — home + Services (one list, shown on both) and the contact
@@ -178,25 +181,44 @@ function makeList(name, containers) {
     render();
   }
 
+  // Firestore waits rather than failing while offline, so a save can hang.
+  // After 15s Carson is told it's still going; a refusal reloads the list.
   async function guard(what, run) {
-    try { await run(); }
-    catch (err) {
-      console.warn('[cms] ' + what + ' failed:', err && (err.code || err.message));
+    const r = await raceTimeout(run(), 15000);
+    if (r.status === 'error') {
+      console.warn('[cms] ' + what + ' failed:', r.error && (r.error.code || r.error.message));
       showToast('Not saved — check your connection', 4000);
-      await reload();
+      try { await reload(); } catch (e) { /* still offline; leave the page as it is */ }
+    } else if (r.status === 'timeout') {
+      showToast('Still saving… keep this tab open', 0);
     }
+    return r.status;
   }
 
-  async function ensureSeeded() {
-    if (state.seeded) return;
+  const FLAG = 'lists.' + name + '.seeded';
+
+  // Shared in-flight run (once): turning editing off and on again while the
+  // first seed is still going must not copy the HTML items in twice.
+  const seed = once(async function () {
     // The page-load read may have timed out; ask again properly before
     // deciding the list is empty.
     const existing = await readCollection(name);
-    if (existing.length) { state.items = existing; state.seeded = true; render(); return; }
+    if (existing.length || getField(FLAG, false)) {
+      state.items = existing;
+      if (!getField(FLAG, false)) await setField(FLAG, true);
+      state.seeded = true;
+      render();
+      return;
+    }
     const fallback = Array.prototype.map.call(containers[0].querySelectorAll(':scope > *'), cfg.scrape);
     await seedCollection(name, fallback);
+    await setField(FLAG, true);
     state.seeded = true;
     await reload();
+  });
+
+  function ensureSeeded() {
+    return state.seeded ? Promise.resolve() : seed();
   }
 
   function move(index, delta) {
@@ -210,12 +232,13 @@ function makeList(name, containers) {
   async function replaceVideo(item) {
     const next = await pickVideo({ slot: name, id: item.id });
     if (!next) return;
-    guard('replace video', async function () {
+    const status = await guard('replace video', async function () {
       await updateCollectionItem(name, item.id, { video: next, link: '' });
       deleteVideoFiles(item.video);
       await reload();
       showToast('Saved');
     });
+    if (status === 'error') deleteVideoFiles(next);
   }
 
   function pasteLink(item) {
@@ -256,7 +279,8 @@ function makeList(name, containers) {
       video = await pickVideo({ slot: name, id: 'new-' + Date.now() });
       if (!video) return;
     }
-    guard('add', async function () {
+    const status = await guard('add', async function () {
+      await ensureSeeded();
       const id = await addCollectionItem(name, cfg.blank(video));
       if (cfg.newestFirst) {
         const ids = state.items.map(function (i) { return i.id; });
@@ -265,6 +289,7 @@ function makeList(name, containers) {
       await reload();
       showToast('Added. Tap its words to edit them.');
     });
+    if (status === 'error') deleteVideoFiles(video);
   }
 
   function placeAddButtons() {
@@ -297,7 +322,9 @@ function makeList(name, containers) {
   return {
     init: async function () {
       const loaded = await loadCollection(name);
-      if (loaded.length) {
+      // Empty AND never saved: keep the HTML's own items. Empty after Carson
+      // deleted everything: show an empty list, not the old placeholders.
+      if (listView(loaded, getField(FLAG, false)) === 'items') {
         state.items = loaded;
         state.seeded = true;
         render();

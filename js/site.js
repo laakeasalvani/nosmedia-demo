@@ -164,8 +164,10 @@
   if (slider) {
     var prev = document.querySelector("[data-slide='prev']"), next = document.querySelector("[data-slide='next']");
     var bar = document.querySelector(".slider-bar");
-    var step = function () { var s = slider.querySelector(".slide"); return s.offsetWidth + 16; };
+    var step = function () { var s = slider.querySelector(".slide"); return s ? s.offsetWidth + 16 : 0; };
     var update = function () {
+      // Carson can delete every slide; with none left, just park the arrows.
+      if (!slider.querySelector(".slide")) { prev.disabled = next.disabled = true; bar.style.setProperty("--bar", "100%"); return; }
       var max = slider.scrollWidth - slider.clientWidth;
       var vis = slider.clientWidth / slider.scrollWidth;
       bar.style.setProperty("--bar", ((vis + (1 - vis) * (max ? slider.scrollLeft / max : 1)) * 100).toFixed(1) + "%");

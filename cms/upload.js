@@ -13,7 +13,7 @@ export function uploadFile(file, path, opts) {
   const signal = opts && opts.signal;
   return new Promise(function (resolve, reject) {
     const task = uploadBytesResumable(ref(storage, path), file, {
-      contentType: file.type || 'application/octet-stream',
+      contentType: (opts && opts.contentType) || file.type || 'application/octet-stream',
       cacheControl: 'public, max-age=31536000, immutable',
     });
     if (signal) {

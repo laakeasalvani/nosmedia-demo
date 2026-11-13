@@ -1,7 +1,7 @@
 import { getField, setField } from './content-store.js';
 import { onEditingChange } from './auth.js';
 import { sanitizeHtml, toPlainText, initPasteGuard } from './sanitize.js';
-import { showToast } from './toast.js';
+import { saveWithFeedback } from './save.js';
 
 // In-place text editing, adapted from CaptureWithKi's edit-text.js.
 //
@@ -35,7 +35,9 @@ function apply(el) {
 }
 
 function editableTargets() {
-  return document.querySelectorAll('[data-cms-type="text"][data-cms-id], [data-cms-field]');
+  // List fields join only once their item has an id (after seeding);
+  // before that an edit would have nowhere to save.
+  return document.querySelectorAll('[data-cms-type="text"][data-cms-id], [data-cms-item-id] [data-cms-field]');
 }
 
 export function initTextEditing() {
@@ -106,11 +108,6 @@ export function initTextEditing() {
       if (isReveal(twin)) { twin.textContent = toPlainText(value); } else { twin.innerHTML = value; }
     });
 
-    setField(id, value)
-      .then(function () { showToast('Saved'); })
-      .catch(function (err) {
-        console.warn('[cms] save failed:', err && (err.code || err.message));
-        showToast('Not saved — check your connection');
-      });
+    saveWithFeedback(setField(id, value));
   }, true);
 }

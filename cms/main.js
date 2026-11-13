@@ -67,7 +67,13 @@ function wire(ui) {
     login(form.email.value.trim(), form.password.value)
       .then(function () {
         form.password.value = '';
-        // Admin status arrives a moment later (onAdminChange below).
+        // Admin status arrives a moment later (onAdminChange below). If it
+        // never does, the account exists but isn't in the admins list.
+        setTimeout(function () {
+          if (isAdmin() || !ui.modal.classList.contains('open')) return;
+          errorEl.textContent = 'This account can’t edit the site yet. Ask Laakea to add it.';
+          logout();
+        }, 5000);
       })
       .catch(function () {
         errorEl.textContent = 'That email and password didn’t match. Try again.';

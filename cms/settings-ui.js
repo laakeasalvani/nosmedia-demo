@@ -3,6 +3,7 @@ import { mergeSettings, instagramHandle, mailtoHref, embedUrl } from './derive.j
 import { pickVideo } from './media-picker.js';
 import { deleteIfOwned } from './upload.js';
 import { showToast } from './toast.js';
+import { raceTimeout } from './timeout.js';
 
 // Carson's settings: the values js/config.js holds as fallbacks. Email and
 // Instagram are filled into every place they appear (text AND link) from
@@ -126,15 +127,19 @@ export function initSettingsUi() {
     if (!keys.length) { close(); return; }
     const save = form.querySelector('[type="submit"]');
     save.disabled = true;
-    try {
-      for (const k of keys) await setSetting(k, changes[k]);
-    } catch (err) {
-      console.warn('[cms] settings save failed:', err && (err.code || err.message));
+    const write = Promise.all(keys.map(function (k) { return setSetting(k, changes[k]); }));
+    const r = await raceTimeout(write, 15000);
+    save.disabled = false;
+    if (r.status === 'error') {
+      console.warn('[cms] settings save failed:', r.error && (r.error.code || r.error.message));
       errorEl.textContent = 'Not saved — check your connection and try again.';
-      save.disabled = false;
       return;
     }
-    save.disabled = false;
+    if (r.status === 'timeout') {
+      errorEl.textContent = 'Still saving… your connection is slow. Keep this tab open, or try again.';
+      write.then(function () { showToast('Settings saved'); }, function () { showToast('Settings not saved — try again', 4000); });
+      return;
+    }
     // A cleared optional value has to override config.js too, so apply the
     // raw changes on top rather than through mergeSettings' "non-empty wins".
     Object.assign(window.NOS, changes);

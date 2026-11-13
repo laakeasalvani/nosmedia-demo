@@ -50,3 +50,12 @@ export function embedUrl(link) {
   if (m) return 'https://player.vimeo.com/video/' + m[1];
   return '';
 }
+
+// iPhone or iPad, including iPadOS, which reports itself as a Mac but has a
+// touch screen. Used to show the "pick from Files, not Photos" step: iOS
+// silently re-encodes a video picked from the Photo Library.
+export function isIOSDevice(nav) {
+  const ua = (nav && nav.userAgent) || '';
+  if (/iPhone|iPad|iPod/.test(ua)) return true;
+  return /Macintosh/.test(ua) && ((nav && nav.maxTouchPoints) || 0) > 1;
+}

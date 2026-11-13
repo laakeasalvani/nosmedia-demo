@@ -1,5 +1,6 @@
 import { checkVideoFile, messageFor } from './video-check.js';
-import { storagePathFor } from './storage-paths.js';
+import { storagePathFor, uploadContentType, isAllowedImageType } from './storage-paths.js';
+import { isIOSDevice } from './derive.js';
 import { uploadFile, deleteIfOwned } from './upload.js';
 
 // The one way any video or photo gets onto the site. It picks a file, checks
@@ -11,7 +12,7 @@ import { uploadFile, deleteIfOwned } from './upload.js';
 const MAX_IMAGE_BYTES = 50 * 1024 * 1024;
 const POSTER_MAX_EDGE = 2560;   // the still only; the video is never resized
 const STOPPED = 'Upload stopped. Nothing on the site changed.';
-const IPHONE_TIP = 'Tip: on iPhone, tap Choose File → Browse to upload the original from Files at full quality.';
+const IPHONE_TIP = 'Keep this screen open until it finishes.';
 
 function pickFile(accept) {
   return new Promise(function (resolve) {
@@ -69,6 +70,19 @@ function tell(title, msg) {
     ok.focus();
   });
 }
+// iOS quietly re-encodes a video picked from the Photo Library before the
+// page ever sees it, so the tip has to come BEFORE the picker. The picker is
+// opened from this screen's button so iOS still counts it as a tap.
+function chooseVideoOnIOS(accept) {
+  return new Promise(function (resolve) {
+    const o = show('Full quality', 'On the next screen, tap Choose File → Browse and pick the video from Files. Picking it from Photos lets your iPhone shrink it first.', { ok: true, cancel: true });
+    const ok = o.querySelector('[data-ok]');
+    ok.textContent = 'Choose video';
+    ok.onclick = function () { ok.textContent = 'OK'; hide(); resolve(pickFile(accept)); };
+    o.querySelector('[data-cancel]').onclick = function () { ok.textContent = 'OK'; hide(); resolve(null); };
+  });
+}
+
 function ask(title, msg) {
   return new Promise(function (resolve) {
     const o = show(title, msg, { ok: true, cancel: true });
@@ -97,7 +111,9 @@ export function grabPosterFrame(file) {
     const timer = setTimeout(function () { finish(null); }, 20000);
     v.muted = true; v.playsInline = true; v.preload = 'auto';
     v.addEventListener('error', function () { finish(null); });
-    v.addEventListener('loadeddata', function () {
+    // loadedmetadata, not loadeddata: iOS often won't load frames for a
+    // video that hasn't been played, but it will seek.
+    v.addEventListener('loadedmetadata', function () {
       v.currentTime = Math.min(1, (v.duration || 10) * 0.1);
     });
     v.addEventListener('seeked', function () {
@@ -124,7 +140,8 @@ function withCancel(run) {
 }
 
 export async function pickVideo(where) {
-  const file = await pickFile('video/mp4,video/quicktime');
+  const accept = 'video/mp4,video/quicktime';
+  const file = isIOSDevice(navigator) ? await chooseVideoOnIOS(accept) : await pickFile(accept);
   if (!file) return null;
 
   show('Checking video', 'One moment…');
@@ -133,18 +150,21 @@ export async function pickVideo(where) {
   if (check.warnLarge && !(await ask('Big file', 'This file is over 1GB. Big films cost money each time someone watches them. A YouTube or Vimeo link is free. Upload anyway?'))) return null;
 
   show('Checking video', 'One moment…');
+  // The codec check already passed; a missing still just means the video
+  // shows its own first frame while it loads.
   const poster = await grabPosterFrame(file);
-  if (!poster) { await tell('Can’t use this video', messageFor('codec-unknown')); return null; }
 
   const now = Date.now();
   return withCancel(async function (signal) {
     show('Uploading video', '0%', { progress: true, cancel: true, tip: IPHONE_TIP });
     const src = await uploadFile(file, storagePathFor(where.slot, where.id, file.name, now), {
-      signal: signal, onProgress: function (f) { setProgress(f * 0.97); },
+      signal: signal, contentType: uploadContentType('video', file),
+      onProgress: function (f) { setProgress(poster ? f * 0.97 : f); },
     });
+    if (!poster) { hide(); return { src: src, poster: '' }; }
     try {
       const posterUrl = await uploadFile(poster, storagePathFor(where.slot, where.id, 'poster.jpg', now), {
-        signal: signal, onProgress: function (f) { setProgress(0.97 + f * 0.03); },
+        signal: signal, contentType: 'image/jpeg', onProgress: function (f) { setProgress(0.97 + f * 0.03); },
       });
       hide();
       return { src: src, poster: posterUrl };
@@ -156,13 +176,13 @@ export async function pickVideo(where) {
 }
 
 export async function pickImage(where) {
-  const file = await pickFile('image/*');
+  const file = await pickFile('image/jpeg,image/png,image/webp');
   if (!file) return null;
-  if (!/^image\//.test(file.type)) { await tell('Can’t use this file', 'That isn’t a photo. Pick a JPEG, PNG or WebP.'); return null; }
+  if (!isAllowedImageType(file.type)) { await tell('Can’t use this photo', 'Use a JPEG, PNG or WebP. iPhone and Mac photos are often HEIC, which most browsers can’t show; export or share it as a JPEG first.'); return null; }
   if (file.size > MAX_IMAGE_BYTES) { await tell('Can’t use this photo', 'That photo is over 50MB. Export a smaller JPEG and try again.'); return null; }
   return withCancel(async function (signal) {
     show('Uploading photo', '0%', { progress: true, cancel: true });
-    const url = await uploadFile(file, storagePathFor(where.slot, where.id, file.name, Date.now()), { signal: signal, onProgress: setProgress });
+    const url = await uploadFile(file, storagePathFor(where.slot, where.id, file.name, Date.now()), { signal: signal, contentType: uploadContentType('image', file), onProgress: setProgress });
     hide();
     return url;
   });

@@ -39,3 +39,12 @@ test('embedUrl rejects anything else', () => {
   assert.equal(embedUrl('javascript:alert(1)'), '');
   assert.equal(embedUrl(''), '');
 });
+
+import { isIOSDevice } from '../cms/derive.js';
+
+test('isIOSDevice spots iPhones and iPads (including iPadOS posing as a Mac)', () => {
+  assert.equal(isIOSDevice({ userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)', maxTouchPoints: 5 }), true);
+  assert.equal(isIOSDevice({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', maxTouchPoints: 5 }), true);
+  assert.equal(isIOSDevice({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', maxTouchPoints: 0 }), false);
+  assert.equal(isIOSDevice({ userAgent: 'Mozilla/5.0 (Linux; Android 14)', maxTouchPoints: 5 }), false);
+});

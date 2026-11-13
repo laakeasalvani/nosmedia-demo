@@ -13,3 +13,10 @@ export function orderForNewItem(items) {
   });
   return max + 1;
 }
+
+// What a list shows. The HTML's built-in items are only a stand-in for a
+// list that has never been saved. Once Carson has saved it (seeded), an
+// empty list means he deleted everything on purpose, and it stays empty.
+export function listView(items, seeded) {
+  return items.length || seeded ? 'items' : 'html';
+}
