@@ -3,6 +3,7 @@ import { loadSiteContent, loadSettings } from './content-store.js';
 import { initTextEditing } from './edit-text.js';
 import { initMediaEditing } from './edit-media.js';
 import { initLists } from './lists.js';
+import { applySettings, initSettingsUi } from './settings-ui.js';
 
 // CMS entry point, loaded on every page after js/site.js.
 // Order matters: content first (so the page shows Carson's words), then the
@@ -89,13 +90,13 @@ function wire(ui) {
 (async function () {
   try {
     const results = await Promise.all([loadSiteContent(), loadSettings()]);
-    window.__nosSettings = results[1];
+    applySettings(results[1]);
     initTextEditing();
     initMediaEditing();
     await initLists();
-    // Later tasks register their editors here, in this order.
     const ui = buildChrome();
     wire(ui);
+    initSettingsUi();
     initAuth();
   } finally {
     document.documentElement.classList.remove('cms-pending');
