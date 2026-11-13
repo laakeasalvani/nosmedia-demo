@@ -4,7 +4,7 @@ This is Carson Coen's videographer site (Honolulu). Laakea drives the work, and 
 who uses the editor.
 
 - **Live demo:** https://laakeasalvani.github.io/nosmedia-demo/ (GitHub Pages, `main` branch, repo root, `noindex` on every page)
-- **Firebase project:** `PROJECT_ID_PENDING` (Blaze plan)
+- **Firebase project:** `nosmedia-site` (Blaze plan)
 - **Local preview:** launch config `nosmedia`, port 4520
 - **Spec / plan:** `docs/superpowers/specs/2026-11-12-cms-design.md`, `docs/superpowers/plans/2026-11-12-cms.md`
 
@@ -29,7 +29,7 @@ Login is per browser tab, so Carson signs in again in each new tab.
 
 ## HARD RULES
 
-1. **Never run a bare `firebase deploy`.** Always `firebase deploy --only firestore:rules,storage --project PROJECT_ID_PENDING`. There are no Functions yet.
+1. **Never run a bare `firebase deploy`.** Always `firebase deploy --only firestore:rules,storage --project nosmedia-site`. There are no Functions yet.
 2. **Never re-encode, shrink or transcode Carson's videos.** Uploads go up byte-for-byte. The only generated file is a JPEG poster still (max 2560px).
 3. **H.264 only.** `cms/video-check.js` refuses HEVC and ProRes by reading the file's `stsd` sample entries. Don't relax this to "it plays in my browser": Safari plays HEVC, but Firefox and many Android and Windows browsers don't.
 4. **Never ask for, guess or type Carson's or Laakea's password.** When a logged-in test is needed, ask Laakea to type it in the Browser pane.
