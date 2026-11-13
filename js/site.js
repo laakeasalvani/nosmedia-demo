@@ -38,10 +38,28 @@
   var hero = document.querySelector(".hero");
   var heroInner = document.querySelector(".hero-inner");
   var words = [];
-  document.querySelectorAll(".reveal-text").forEach(function (el) {
-    el.innerHTML = el.textContent.trim().split(/\s+/).map(function (w) { return '<span class="w">' + w + "</span>"; }).join(" ");
-    words.push(el);
-  });
+  var scrollReady = false;
+  // Wraps each word in a span so the scroll fade can light them one by one.
+  // The CMS undoes this while Carson edits a line, then calls it again.
+  function splitReveal(el) {
+    var text = el.textContent.trim();
+    el.innerHTML = "";
+    text.split(/\s+/).forEach(function (w, i) {
+      if (i) el.appendChild(document.createTextNode(" "));
+      var span = document.createElement("span");
+      span.className = "w";
+      span.textContent = w;
+      el.appendChild(span);
+    });
+    if (words.indexOf(el) < 0) words.push(el);
+    if (scrollReady) onScroll();
+  }
+  function unsplitReveal(el) {
+    var text = el.textContent.replace(/\s+/g, " ").trim();
+    el.textContent = text;
+    return text;
+  }
+  document.querySelectorAll(".reveal-text").forEach(splitReveal);
   var ghosts = document.querySelectorAll(".ghost");
   var steps = document.querySelector(".steps");
 
@@ -94,33 +112,46 @@
   }, { passive: true });
   window.addEventListener("resize", onScroll);
   onScroll();
+  scrollReady = true;
 
   // ---------- videos: only play while on screen, and only show once playing ----------
-  var vids = Array.prototype.slice.call(document.querySelectorAll("video[data-autoplay]"));
   var heroV = document.querySelector(".hero video");
+  var tryPlay = function (v) { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); };
+  var onScreen = function (v) { var r = v.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; };
+  var io = (!reduce && "IntersectionObserver" in window) ? new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) { if (en.isIntersecting) tryPlay(en.target); else en.target.pause(); });
+  }, { threshold: 0.15 }) : null;
+
+  // Safe to call again on content the CMS re-renders: each video is wired once.
+  function wireVideos(root) {
+    (root || document).querySelectorAll("video[data-autoplay]:not([data-wired])").forEach(function (v) {
+      v.setAttribute("data-wired", "");
+      v.muted = true; // iOS only autoplays when the property, not just the attribute, is set
+      if (v.poster && v.parentElement !== hero) v.parentElement.style.backgroundImage = "url(" + v.poster + ")";
+      v.addEventListener("playing", function () { v.classList.add("is-playing"); });
+      if (reduce) return;
+      if (io) io.observe(v); else tryPlay(v);
+    });
+  }
+  function setHeroSource(url) {
+    if (!heroV || !url) return;
+    heroV.classList.remove("is-playing");
+    heroV.src = url;
+    heroV.load();
+    if (!reduce) tryPlay(heroV);
+  }
+
   if (heroV) {
     // phones and slow connections get the lighter 720p loop
     var conn = navigator.connection || {};
     var small = window.innerWidth < 900 || conn.saveData || /(^|-)(2g|3g)$/.test(conn.effectiveType || "");
     heroV.src = C.reelUrl || heroV.getAttribute(small ? "data-src-small" : "data-src-large");
   }
-  vids.forEach(function (v) {
-    v.muted = true; // iOS only autoplays when the property, not just the attribute, is set
-    if (v.poster && v.parentElement !== hero) v.parentElement.style.backgroundImage = "url(" + v.poster + ")";
-    v.addEventListener("playing", function () { v.classList.add("is-playing"); });
-  });
-  var tryPlay = function (v) { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); };
-  var onScreen = function (v) { var r = v.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; };
+  wireVideos(document);
   if (!reduce) {
-    if ("IntersectionObserver" in window) {
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) { if (en.isIntersecting) tryPlay(en.target); else en.target.pause(); });
-      }, { threshold: 0.15 });
-      vids.forEach(function (v) { io.observe(v); });
-    } else vids.forEach(tryPlay);
     // if the phone blocked autoplay (e.g. Low Power Mode), the first tap anywhere starts them
     var kick = function () {
-      vids.forEach(function (v) { if (v.paused && onScreen(v)) tryPlay(v); });
+      document.querySelectorAll("video[data-autoplay]").forEach(function (v) { if (v.paused && onScreen(v)) tryPlay(v); });
       document.removeEventListener("touchend", kick); document.removeEventListener("click", kick);
     };
     document.addEventListener("touchend", kick, { passive: true });
@@ -129,6 +160,7 @@
 
   // ---------- O‘ahu slider ----------
   var slider = document.querySelector(".slider");
+  var refreshSlider = function () {};
   if (slider) {
     var prev = document.querySelector("[data-slide='prev']"), next = document.querySelector("[data-slide='next']");
     var bar = document.querySelector(".slider-bar");
@@ -145,6 +177,7 @@
     slider.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
     update();
+    refreshSlider = update;
   }
 
   // ---------- swap placeholders for real media once config is filled in ----------
@@ -162,15 +195,23 @@
     el.innerHTML = "";
     el.appendChild(node);
   }
-  embed(document.querySelector('[data-embed="vsl"]'), C.vslUrl, "How working with nosMedia works");
-
-  var cal = document.querySelector('[data-embed="calendar"]');
-  if (cal && C.calendarUrl) {
-    cal.innerHTML = "";
-    var f = document.createElement("iframe");
-    f.src = C.calendarUrl; f.title = "Pick a time for your call";
-    cal.appendChild(f);
+  // Re-run by the CMS after Carson saves a setting, so it shows without a reload.
+  function applyConfig() {
+    embed(document.querySelector('[data-embed="vsl"]'), C.vslUrl, "How working with nosMedia works");
+    var cal = document.querySelector('[data-embed="calendar"]');
+    if (cal && C.calendarUrl) {
+      var cur = cal.querySelector("iframe");
+      if (!cur || cur.src !== C.calendarUrl) {
+        cal.innerHTML = "";
+        var f = document.createElement("iframe");
+        f.src = C.calendarUrl; f.title = "Pick a time for your call";
+        cal.appendChild(f);
+      }
+    }
+    var google = C.googleReviewUrl || "#google-review-link-coming-soon";
+    document.querySelectorAll("[data-google]").forEach(function (a) { a.href = google; });
   }
+  applyConfig();
 
   // ---------- inquiry form: opens a pre-filled email to Carson (no server yet) ----------
   var inquiry = document.querySelector("#inquiry");
@@ -203,8 +244,6 @@
       if (h) { h.setAttribute("tabindex", "-1"); h.focus(); }
     };
     var light = function (n) { stars.forEach(function (s, i) { s.classList.toggle("lit", i < n); }); hint.textContent = labels[n] || ""; };
-    var google = C.googleReviewUrl || "#google-review-link-coming-soon";
-    funnel.querySelectorAll("[data-google]").forEach(function (a) { a.href = google; });
     stars.forEach(function (s, i) {
       s.addEventListener("mouseenter", function () { light(i + 1); });
       s.addEventListener("focus", function () { light(i + 1); });
@@ -223,4 +262,13 @@
       show("step-thanks");
     });
   }
+
+  window.NOSSite = {
+    wireVideos: wireVideos,
+    setHeroSource: setHeroSource,
+    splitReveal: splitReveal,
+    unsplitReveal: unsplitReveal,
+    refreshSlider: function () { refreshSlider(); },
+    applyConfig: applyConfig
+  };
 })();
