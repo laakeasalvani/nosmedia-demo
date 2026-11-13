@@ -2,6 +2,7 @@ import { initAuth, login, logout, isAdmin, onAdminChange, isEditing, setEditing,
 import { loadSiteContent, loadSettings } from './content-store.js';
 import { initTextEditing } from './edit-text.js';
 import { initMediaEditing } from './edit-media.js';
+import { initLists } from './lists.js';
 
 // CMS entry point, loaded on every page after js/site.js.
 // Order matters: content first (so the page shows Carson's words), then the
@@ -91,6 +92,7 @@ function wire(ui) {
     window.__nosSettings = results[1];
     initTextEditing();
     initMediaEditing();
+    await initLists();
     // Later tasks register their editors here, in this order.
     const ui = buildChrome();
     wire(ui);

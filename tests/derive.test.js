@@ -23,3 +23,19 @@ test('serviceOptions uses short labels, drops blanks and dupes, ends with Not su
   assert.deepEqual(serviceOptions([{ title: 'Not sure yet' }]), ['Not sure yet']);
   assert.deepEqual(serviceOptions([{ title: ' ' }, { title: 'Events' }, { title: 'Events ' }]), ['Events', 'Not sure yet']);
 });
+
+import { embedUrl } from '../cms/derive.js';
+
+test('embedUrl turns YouTube and Vimeo links into player URLs', () => {
+  assert.equal(embedUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=5'), 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+  assert.equal(embedUrl('https://youtu.be/dQw4w9WgXcQ'), 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+  assert.equal(embedUrl('https://www.youtube.com/shorts/dQw4w9WgXcQ'), 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+  assert.equal(embedUrl('https://vimeo.com/76979871'), 'https://player.vimeo.com/video/76979871');
+  assert.equal(embedUrl('https://player.vimeo.com/video/76979871'), 'https://player.vimeo.com/video/76979871');
+});
+
+test('embedUrl rejects anything else', () => {
+  assert.equal(embedUrl('https://example.com/video'), '');
+  assert.equal(embedUrl('javascript:alert(1)'), '');
+  assert.equal(embedUrl(''), '');
+});

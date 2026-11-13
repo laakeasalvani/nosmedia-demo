@@ -78,3 +78,19 @@ html.cms-editing-on .hero-inner { opacity: 1 !important; transform: none !import
 .cms-upload { z-index: 1050; }
 .cms-progress { height: 8px; border-radius: 999px; background: #e2e2e0; overflow: hidden; }
 .cms-progress i { display: block; height: 100%; width: 0; background: #000; transition: width .2s; }
+
+/* ---------- list item tools (services, slides, films) ---------- */
+.cms-item-tools { display: none; }
+html.cms-editing-on [data-cms-item-id] { position: relative; }
+html.cms-editing-on .cms-item-tools {
+  position: absolute; top: 8px; left: 8px; right: 8px; z-index: 25;
+  display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none;
+}
+.cms-tool {
+  pointer-events: auto; min-width: 44px; min-height: 44px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid #000; background: #fff; color: #000; cursor: pointer;
+  font: 600 .85rem var(--text, system-ui, sans-serif); box-shadow: 0 4px 14px rgba(0, 0, 0, .2);
+}
+.cms-tool:disabled { opacity: .35; cursor: default; }
+.cms-tool[aria-label^="Delete"] { margin-left: auto; }
+.cms-add { display: block; margin: 16px auto 0; }

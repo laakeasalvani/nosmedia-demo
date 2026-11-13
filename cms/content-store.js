@@ -1,5 +1,6 @@
 import { db } from './firebase.js';
 import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { withTimeout } from './timeout.js';
 
 // Two documents: content/site holds every editable text and media slot by key
 // (shared.* and <page>.*); content/settings holds the config.js overrides.
@@ -12,12 +13,10 @@ let site = {};
 let loaded = false;
 
 function loadDoc(id) {
-  const timeout = new Promise(function (resolve) { setTimeout(function () { resolve(null); }, LOAD_TIMEOUT_MS); });
-  const read = getDoc(doc(db, 'content', id))
-    .then(function (snap) { return snap.exists() ? snap.data() : {}; })
-    .catch(function (e) { console.warn('[cms] load ' + id + ' failed:', e.code || e.message); return {}; });
-  return Promise.race([read, timeout]).then(function (data) {
-    if (data === null) console.warn('[cms] load ' + id + ' timed out; showing the built-in text');
+  const read = getDoc(doc(db, 'content', id)).then(function (snap) { return snap.exists() ? snap.data() : {}; });
+  read.catch(function (e) { console.warn('[cms] load ' + id + ' failed:', e.code || e.message); });
+  return withTimeout(read, LOAD_TIMEOUT_MS, null).then(function (data) {
+    if (data === null) console.warn('[cms] load ' + id + ' gave no answer; showing the built-in text');
     return data || {};
   });
 }

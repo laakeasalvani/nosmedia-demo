@@ -39,3 +39,14 @@ export function serviceOptions(services) {
   out.push(LAST);
   return out;
 }
+
+// A pasted YouTube or Vimeo link → the URL its player embeds from. Anything
+// else returns '' so a typo or a stray script URL never becomes an iframe.
+export function embedUrl(link) {
+  const s = String(link || '').trim();
+  let m = s.match(/^https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  if (m) return 'https://www.youtube-nocookie.com/embed/' + m[1];
+  m = s.match(/^https?:\/\/(?:www\.|player\.)?vimeo\.com\/(?:video\/)?(\d+)/);
+  if (m) return 'https://player.vimeo.com/video/' + m[1];
+  return '';
+}
