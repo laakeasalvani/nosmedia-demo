@@ -48,7 +48,7 @@ const LISTS = {
       return {
         title: t,
         description: item.querySelector('[data-cms-field="description"]').textContent.trim(),
-        shortLabel: ({ 'Brand films': 'Brand film', 'Events': 'Event' })[t] || '',
+        shortLabel: ({ 'Brand films': 'Brand film', 'Events': 'Event', 'Corporate interviews': 'Corporate interview' })[t] || '',
         video: { src: v.getAttribute('src'), poster: v.getAttribute('poster') },
       };
     },

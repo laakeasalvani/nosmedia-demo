@@ -183,23 +183,8 @@
   }
 
   // ---------- swap placeholders for real media once config is filled in ----------
-  function embed(el, url, title) {
-    if (!el || !url) return;
-    var node;
-    if (/\.(mp4|webm|mov)(\?|$)/i.test(url)) {
-      node = document.createElement("video");
-      node.src = url; node.controls = true; node.playsInline = true;
-    } else {
-      node = document.createElement("iframe");
-      node.src = url; node.title = title;
-      node.allow = "autoplay; fullscreen; picture-in-picture"; node.allowFullscreen = true;
-    }
-    el.innerHTML = "";
-    el.appendChild(node);
-  }
   // Re-run by the CMS after Carson saves a setting, so it shows without a reload.
   function applyConfig() {
-    embed(document.querySelector('[data-embed="vsl"]'), C.vslUrl, "How working with nosMedia works");
     var cal = document.querySelector('[data-embed="calendar"]');
     if (cal && C.calendarUrl) {
       var cur = cal.querySelector("iframe");

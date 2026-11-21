@@ -7,7 +7,6 @@ window.NOS = {
   instagram: "https://www.instagram.com/n0smedia/",
 
   // Book a Call page
-  vslUrl: "",          // YouTube/Vimeo embed URL or an .mp4 path for the VSL
   calendarUrl: "",     // Google Calendar appointment schedule link (Calendar → Appointment schedule → Share → Website embed)
 
   // Home hero

@@ -203,7 +203,11 @@ video[data-autoplay]::-webkit-media-controls-overlay-play-button { display: none
 .service-body { padding: 24px 24px 28px; }
 .service-body p { color: var(--graphite); margin: 0; }
 .service-body h3 { font: 400 1.9rem/1 var(--display); text-transform: uppercase; margin-bottom: 12px; }
-@media (max-width: 900px) { .services { grid-template-columns: 1fr; } .service .clip { aspect-ratio: 16 / 9; } }
+/* Four services: one row of four on wide screens, 2×2 below that, so none sits alone. */
+.services:has(> :nth-child(4):last-child) { grid-template-columns: repeat(4, 1fr); }
+.services:has(> :nth-child(4):last-child) .service-body h3 { font-size: 1.6rem; }
+@media (max-width: 1200px) { .services:has(> :nth-child(4):last-child) { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 900px) { .services, .services:has(> :nth-child(4):last-child) { grid-template-columns: 1fr; } .service .clip { aspect-ratio: 16 / 9; } }
 
 /* how it works: a real sequence, so it's numbered */
 .steps { list-style: none; margin: 0; padding: 0 0 0 clamp(28px, 4vw, 56px); position: relative; display: grid; gap: clamp(48px, 7vw, 88px); counter-reset: step; }

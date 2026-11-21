@@ -3,7 +3,7 @@
 This is Carson Coen's videographer site (Honolulu). Laakea drives the work, and Carson is the one
 who uses the editor.
 
-- **Live demo:** https://laakeasalvani.github.io/nosmedia-demo/ (GitHub Pages, `main` branch, repo root, `noindex` on every page)
+- **Live site:** https://nosmediahawaii.com (GitHub Pages from repo `laakeasalvani/nosmedia-demo`, `main` branch, repo root). DNS is in Carson's GoDaddy account; the domain is also in Firebase Auth's authorized domains. Only `review.html` is `noindex`.
 - **Firebase project:** `nosmedia-site` (Blaze plan)
 - **Local preview:** launch config `nosmedia`, port 4520
 - **Spec / plan:** `docs/superpowers/specs/2026-11-12-cms-design.md`, `docs/superpowers/plans/2026-11-12-cms.md`
@@ -19,11 +19,12 @@ That turns on editing:
 - **Text:** tap any dashed outline and type. Enter or tapping away saves. Links and buttons don't
   navigate while editing; tap **Done** to browse normally.
 - **Hero video / About photo:** use the **Replace video** / **Replace photo** button.
-- **Lists:** services (home + Services + the contact dropdown), slides (home slider) and films
-  (Work). Each item has ← → to reorder, Replace video (or Upload film), Paste link (films),
+- **Lists:** services (home + Services + the contact dropdown) and films (Work). The home
+  "Anywhere on Oʻahu" slider was removed on 2026-11-21 at Carson's request; its `slides` docs
+  are still in Firestore but nothing shows them. Each item has ← → to reorder, Replace video (or Upload film), Paste link (films),
   Form label (services) and × to delete. There's also **+ Add** below each list.
-- **Settings** (in the bottom bar): email, Instagram, calendar link, Google review link, and the
-  book-a-call video.
+- **Settings** (in the bottom bar): email, Instagram, calendar link and Google review link.
+  Carson didn't want a "watch how I work" video, so Book a Call is just the calendar (no VSL).
 
 Login is per browser tab, so Carson signs in again in each new tab.
 
@@ -39,7 +40,7 @@ Login is per browser tab, so Carson signs in again in each new tab.
    ```
    node --test 'tests/*.test.js'
    ```
-   `tests/markers.test.js` checks the `data-cms-id` keys, shared keys, `data-setting` links and the script order. Marker counts on 2026-11-12: index 44, work 24, services 33, about 29, book-a-call 35, contact 32, review 14.
+   `tests/markers.test.js` checks the `data-cms-id` keys, shared keys, `data-setting` links and the script order. Marker counts on 2026-11-21: index 42, work 24, services 33, about 29, book-a-call 35, contact 32, review 14.
 8. **Carson's phone number never appears anywhere on the site.** Contact routes are email, the form and Instagram.
 9. **Email and Instagram are settings, not text.** Every link and every bit of text showing them carries `data-setting`, and `cms/settings-ui.js` fills them in. Never hard-code them.
 10. **Every Firestore read the page waits on has a 3s limit** (`cms/timeout.js`). Seeding a list always re-reads strictly first (`readCollection`), so a timeout is never mistaken for "empty".
@@ -47,8 +48,8 @@ Login is per browser tab, so Carson signs in again in each new tab.
 ## Content model
 
 - `content/site`: flat keys. `shared.*` keys repeat across pages (header, menu, footer, closing CTA). `<page>.<section>.<name>` keys are used once (page = `home|work|services|about|book|contact|review`). Media slots store `{src, poster}` (video) or a URL (image).
-- `content/settings`: overrides for `js/config.js` (`email`, `instagram`, `calendarUrl`, `googleReviewUrl`, `vslUrl`).
-- `services`, `slides`, `films`: one doc per item, with an `order` field. These stay empty until Carson first turns on editing; then the HTML items are copied in.
+- `content/settings`: overrides for `js/config.js` (`email`, `instagram`, `calendarUrl`, `googleReviewUrl`).
+- `services`, `films` (and the unused `slides`): one doc per item, with an `order` field. These stay empty until Carson first turns on editing; then the HTML items are copied in.
 - Storage: `media/<slot>/<id>/<timestamp>-<name>`. Public read; admin write; < 2GB; `video/*` or `image/*` only.
 - `admins/{uid}`: who can edit. It's added by hand in the Firebase console.
 

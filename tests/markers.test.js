@@ -69,7 +69,8 @@ test('the media slots and lists are marked', () => {
   assert.match(html.about, /data-cms-id="about\.portrait" data-cms-type="image"/);
   assert.match(html.index, /data-cms-list="services"/);
   assert.match(html.services, /data-cms-list="services"/);
-  assert.match(html.index, /data-cms-list="slides"/);
+  assert.doesNotMatch(html.index, /data-cms-list="slides"/);
+  assert.doesNotMatch(html['book-a-call'], /data-embed="vsl"/);
   assert.match(html.work, /data-cms-list="films"/);
 });
 
